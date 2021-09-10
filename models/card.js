@@ -1,7 +1,7 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
 // import user from './user';
 
-const cardSchema = new Schema({
+const cardSchema = new mongoose.Schema({
    name: {
       type: String,
       required: true,
@@ -25,7 +25,7 @@ const cardSchema = new Schema({
    createdAt: {
       type: Date,
       default: Date.now,
-   },
+   }
 });
 
-export default model('card', cardSchema);
+export default mongoose.model('card', cardSchema);

@@ -1,4 +1,4 @@
-import User from '../models/user';
+import User from '../models/user.js';
 
 export const getUsers = (req, res) => {
    User.find({})
@@ -15,6 +15,7 @@ export const getUserId = (req, res) => {
 };
 
 export const createUser = (req, res) => {
+   console.log(req.body);
    const { name, about, avatar } = req.body;
 
    User.create({ name, about, avatar })
