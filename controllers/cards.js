@@ -4,8 +4,10 @@ const ERROR_CODE = 400;
 const NOTFOUND_CODE = 404;
 const DEFAULTERROR_CODE = 500;
 
+//Я сам пытался давать неправильный id и когда как получал ReferenceError или CastError, наверно просто упустил ее, про все читал в документации mongoose'a
 const errorHandling = (err, res) => {
   switch (err.name) {
+    case 'CastError':
     case 'ValidationError':
       res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные.' });
       break;
@@ -37,7 +39,7 @@ export const deleteCards = (req, res) => {
     .then((data) => {
       if (data) {
         res.send({ message: 'Карточка удалена' });
-      } else throw ReferenceError;
+      } else throw new ReferenceError();
     })
     .catch((err) => errorHandling(err, res));
 };

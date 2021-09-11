@@ -7,6 +7,7 @@ const DEFAULTERROR_CODE = 500;
 
 const errorHandling = (err, res) => {
   switch (err.name) {
+    case 'CastError':
     case 'ValidationError':
       res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные.' });
       break;
@@ -37,10 +38,11 @@ export const getUserId = (req, res) => {
 
 export const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
-
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
-    .catch((err) => errorHandling(err, res));
+  if (name && about && avatar) {
+    User.create({ name, about, avatar })
+      .then((user) => res.send({ data: user }))
+      .catch((err) => errorHandling(err, res));
+  } else throw errorHandling(new mongoose.Error.ValidationError(''), res);
 };
 
 export const updateUserInfo = (req, res) => {
