@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import User from '../models/user';
 
 const ERROR_CODE = 400;
@@ -9,7 +11,7 @@ const errorHandling = (err, res) => {
   switch (err.name) {
     case 'CastError':
     case 'ValidationError':
-      res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные.' });
+      res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные.', err });
       break;
     case 'ReferenceError':
       res.status(NOTFOUND_CODE).send({ message: 'Пользователь с указанным _id не найден.' });
@@ -18,6 +20,27 @@ const errorHandling = (err, res) => {
       res.status(DEFAULTERROR_CODE).send({ message: 'Произошла ошибка' });
       break;
   }
+};
+
+export const login = (req, res) => {
+  const { email, password } = req.body;
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+          sameSite: true,
+        });
+      res.send('login');
+    })
+
+    .catch((err) => {
+      res
+        .status(401)
+        .send({ message: err.message });
+    });
 };
 
 export const getUsers = (req, res) => {
@@ -36,12 +59,29 @@ export const getUserId = (req, res) => {
     .catch((err) => errorHandling(err, res));
 };
 
+export const getUserMe = (req, res) => {
+  User.findById({ _id: req.user._id })
+    .then((user) => {
+      if (user) {
+        res.send(user);
+      } else throw new ReferenceError();
+    })
+    .catch((err) => errorHandling(err, res));
+};
+
 export const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  if (name && about && avatar) {
-    User.create({ name, about, avatar })
-      .then((user) => res.send({ data: user }))
-      .catch((err) => errorHandling(err, res));
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
+  if (email && password) {
+    bcrypt.hash(password, 10)
+      .then((hash) => {
+        User.create({
+          email, password: hash, name, about, avatar,
+        })
+          .then((user) => res.send({ data: user }))
+          .catch((err) => errorHandling(err, res));
+      });
   } else throw errorHandling(new mongoose.Error.ValidationError(''), res);
 };
 
