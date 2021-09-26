@@ -1,16 +1,17 @@
 import jsonwebtoken from 'jsonwebtoken';
+import UnauthorizedError from '../errors/UnauthorizedError';
 
 // eslint-disable-next-line consistent-return
 function auth(req, res, next) {
   const { jwt } = req.cookies;
   if (!jwt) {
-    return res.status(401).send({ message: 'Необходима авторизация' });
+    throw new UnauthorizedError('Необходима авторизация');
   }
   let payload;
   try {
     payload = jsonwebtoken.verify(jwt, 'some-secret-key');
   } catch (err) {
-    return res.status(401).send({ message: 'Необходима авторизация' });
+    throw new UnauthorizedError('Необходима авторизация');
   }
   req.user = payload;
   next();
