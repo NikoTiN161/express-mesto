@@ -43,7 +43,10 @@ app.use((err, req, res, next) => {
     message = 'Такой email уже существует';
     statusCode = 409;
   }
-
+  if (err.name === 'ValidationError') {
+    message = err.message;
+    statusCode = 400;
+  }
   res.status(statusCode).send({
     message: statusCode === 500
       ? 'На сервере произошла ошибка'
