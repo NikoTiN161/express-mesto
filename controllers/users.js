@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import NotFoundError from '../errors/NotFoundError';
 import BadRequestError from '../errors/BadRequestError';
+import ConflictError from '../errors/ConflictError';
 
 // jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MTQ3ODFkMWU4MjE5MDJkZTgxYjk1MjUiLCJpYXQiOjE2MzIwNzY5MDUsImV4cCI6MTYzMjY4MTcwNX0.NioL_4AhM6AQbb8oAKgsLjvRgnFABymLoTsmqpO0Pl4; Path=/; HttpOnly; Expires=Sun, 26 Sep 2021 18:41:45 GMT;
 
@@ -64,9 +65,6 @@ export const createUser = (req, res, next) => {
           email, password: hash, name, about, avatar,
         })
           .then((user) => {
-            if (!user) {
-              throw new Error('Такой email уже существует');
-            }
             res.send({ data: user });
           })
           .catch(next);

@@ -23,6 +23,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
+    avatar: Joi.string(),
   }),
 }), createUser);
 app.post('/signin', celebrate({
@@ -37,11 +38,12 @@ app.use('/cards', cardsRouter);
 
 app.use(errors());
 app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-  // if (err.name === 'MongoServerError' && err.code === 11000) {
-  //   throw new ConflictError('Такой email уже существует');
-  // }
-  console.log(err);
+  let { statusCode = 500, message } = err;
+  if (err.name === 'MongoServerError' && err.code === 11000) {
+    message = 'Такой email уже существует';
+    statusCode = 409;
+  }
+
   res.status(statusCode).send({
     message: statusCode === 500
       ? 'На сервере произошла ошибка'
