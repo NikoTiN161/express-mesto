@@ -4,18 +4,20 @@ import User from '../models/user';
 import NotFoundError from '../errors/NotFoundError';
 import BadRequestError from '../errors/BadRequestError';
 
+const { JWT_SECRET = 'dev-key' } = process.env;
+
 export const login = (req, res, next) => {
   const { email, password } = req.body;
   User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       res
         .cookie('jwt', token, {
           maxAge: 3600000 * 24 * 7,
           httpOnly: true,
           sameSite: true,
         });
-      res.send('login');
+      res.send({ message: 'Успешный вход' });
     })
     .catch(next);
 };
@@ -62,7 +64,14 @@ export const createUser = (req, res, next) => {
           email, password: hash, name, about, avatar,
         })
           .then((user) => {
-            res.send({ data: user });
+            res.send({
+              data: {
+                email: user.email,
+                name: user.name,
+                about: user.about,
+                avatar: user.avatar,
+              },
+            });
           })
           .catch(next);
       });
@@ -73,7 +82,7 @@ export const updateUserInfo = (req, res, next) => {
   const { _id } = req.user;
   const { name, about } = req.body;
   if (name && about) {
-    User.findByIdAndUpdate(_id, { name, about }, { new: true })
+    User.findByIdAndUpdate(_id, { name, about }, { new: true, runValidators: true })
       .then((user) => {
         if (!user) {
           throw new NotFoundError('Пользователь с указанным _id не найден.');
@@ -88,7 +97,7 @@ export const updateUserAvatar = (req, res, next) => {
   const { _id } = req.user;
   const { avatar } = req.body;
   if (avatar) {
-    User.findByIdAndUpdate(_id, { avatar }, { new: true })
+    User.findByIdAndUpdate(_id, { avatar }, { new: true, runValidators: true })
       .then((user) => {
         if (!user) {
           throw new NotFoundError('Пользователь с указанным _id не найден.');

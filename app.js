@@ -6,6 +6,8 @@ import usersRouter from './routes/users';
 import cardsRouter from './routes/cards';
 import { login, createUser } from './controllers/users';
 import auth from './middlewares/auth';
+import handleErrors from './middlewares/handleErrors';
+import customValidationUrl from './utils/utils';
 
 const { PORT = 3000 } = process.env;
 
@@ -23,7 +25,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string(),
+    avatar: Joi.string().custom(customValidationUrl),
   }),
 }), createUser);
 app.post('/signin', celebrate({
@@ -37,23 +39,7 @@ app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
 
 app.use(errors());
-app.use((err, req, res, next) => {
-  let { statusCode = 500, message } = err;
-  if (err.name === 'MongoServerError' && err.code === 11000) {
-    message = 'Такой email уже существует';
-    statusCode = 409;
-  }
-  if (err.name === 'ValidationError') {
-    message = err.message;
-    statusCode = 400;
-  }
-  res.status(statusCode).send({
-    message: statusCode === 500
-      ? 'На сервере произошла ошибка'
-      : message,
-  });
-  next();
-});
+app.use(handleErrors);
 
 app.listen(PORT, () => {
   console.log(`App started on port ${PORT}`);
